@@ -1,0 +1,157 @@
+---
+title: "INTRODUCCIÓN a AESS"
+author: "María Morales"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+Esta librería ha sido diseñada para facilitar a los usuarios el análisis de los reportes o salidas generados por SocLab (https://soclabproject.wordpress.com/).Para hacer uso de este paquete se requiere tener instalado versiones de R posteriores a 3.3.1. 
+
+El primer paso para hacer uso de este paquete es leer el archivo de salida de SocLab. Los resultados de las simulaciones se deben guardar en un archivo texto separado por tabulaciones. Un ejemplo de este archivo, `potatoesModelV4.txt`.
+
+Para reproducir más facilmente lo indicado a continuación, es una buena idea ubicar este archivo y guardarlo en su directorio de trabajo. Una vez realizado esto, se utiliza la función `dataSocLab` para traer los resultados de SocLab a R. Esta función retorna el nombre de los recursos, nombre de los actores,las variables recursos, satisfacción, influencia u objetivo y el número de pasos. La salida de esta función es la entrada para analizar los diferentes métodos desarrollados en esta librería.
+
+Se tomo como ejemplo para hacer uso de está librería un modelo llamado  Sistema de Producción de Semillas de Papa en Venezuela: caso Municipio José Antonio Rangel, Estado Mérida. Este modelo de simulación incluye 6 actores:
+
+- Actor1: Productores integrales del páramo andino (PROINPA) y el Ministerio de ciencia y Tecnología (MST). El recurso que este actor controla es la producción de semilla prebásica (PREBASIC_S).
+- Actor2: Productores de semilla de papa (SEEDS_PROD). El recurso que este actor controla es la producción de semilla certificada (CERTIFIED_S).
+- Actor3: Importadores de semilla de papa (SEEDS_IMP). El recurso que este actor controla es la semilla de papa importada (IMPORTED_S).
+- Actor4: Productores de papa (POTAT_PROD). Este actor controla 2 recursos producción de papa (POTATOES) y semilla reciclada (RECYCLED_S).
+- Actor5: El estado (STATE). El recurso que este actor controla es el apoyo a la producción nacional (SUPPORT_N).
+- Actor6: Mafia (MAFIA_MARKET). El recurso que este actor controla es la manipulación del mercado de papas para consumo (MANIPUL_M).
+
+Este modelo puede encontrarse en: 
+(https://www.openabm.org/model/4606/version/5/view)
+
+
+
+##Lectura del archivo de salida de SocLab
+
+la salida de esta función (para este ejemplo) se almacena en una variable llamada potatoes, la cual sera usada para los análisis posteriores. 
+
+```{r}
+library(AESS)
+potatoes<-dataSocLab("../inst/extdata/potatoesModelV4.txt")
+```
+
+##Gráficos de histogramas para cada una de las variables
+El siguiente gráfico muestra el comportamiento de los datos para los diferentes actores de la variable satisfacción. Se puede observar que la distribución de la satisfacción del actor PROINPA_MST se asemeja a una distribución normal, ya que presenta la mayor concentración de datos en la parte central. Por otro lado, se observa que el valor máximo para este actor es de 25. La satisfacción para SEEDS_PROD presenta mayor concentración de datos en las barras 5 y 6, sin embargo las barras 7, 8 y 9 presentan muy poca diferencia entre ellas. La variable satisfacción para el actor SEEDS_IMP no presenta un comportamiento simétrico. Igual ocurre para POTAT_PROD, ya que se observa un comportamiento asimétrico positivo, donde la concentración de los datos esta al inicio de la clase. La MAFIA_MARKET también presenta un comportamiento asimétrico positivo. El STATE es el actor que presenta mayor nivel de satisfacción, debido a que la cantidad de datos se ubican a partir del valor 70.
+
+```{r, fig.height=6, fig.width=6}
+histActResources(potatoes, "satisfaction")
+```
+ 
+De igual manera puede realizarse este análisis para la variable influencia, objetivo y estado de los recursos. Para los recursos se observa que los actores que colocan los recursos en un nivel mas elevado son PROINPA_MST (PREBASIC_S), SEED_IMP (IMPORTED_S) y la MAFIA_MARKET (MANIPUL_M). Estos tres recursos alcanzan el nivel superior cercano a 10, lo que quiere decir que ofrecen el máximo valor de recurso sobre el cual tienen control. En el caso de CERTIFIED_S,la mayor concentración de datos esta por encima de 0, es decir, la variable tiene un comportamiento asimétrico positivo, el nivel de este recurso no es muy alto. Algo similar ocurre con POTAT_PROD (POTATOES), dado que  el nivel de este recurso tampoco es tan alto comparado con los tres primeros. En particular, SUPPORT_N se mantiene en negativo, lo que muestra que el STATE ofrece un nivel muy bajo del recurso que controla.
+
+```{r, fig.height=6, fig.width=6}
+histActResources(potatoes, "resources")
+```
+
+##Gráfico de caja para la Variable satisfacción
+Esta gráfica muestra como el actor PROINPA_MST tiene una satisfacción muy baja a pesar de su alto nivel de colaboración, mientras que el actor que tiene el nivel de satisfacción más alta es el STATE.
+
+```{r, fig.height=6, fig.width=6}
+boxActResources(potatoes, "satisfaction")
+```
+
+##Gráfico de caja para el número de pasos, la variable estado de los recursos y la variable influencia
+En esta figura se puede observar cómo influye el número de paso para lograr el estado regulado en las simulaciones, los recursos que controla cada actor y la variable influencia que caracteriza a los diferentes actores. Las relaciones PREBASIC_S, IMPORTED_S Y MANIPUL_M estan a un nivel muy alto mientras que las demás relaciones a un nivel más bajo. Un alto nivel de semilla PREBASIC_S contribuye con un sistema de producción de semilla de papa sano (SPPsano), sin embargo su efectividad se pierde  ya que requiere un buen nivel de colaboración de SEEDS_PROD, esto debido a su conexión directa en la cadena de producción, lo que no sucede dado que los SEEDS_PROD tienen un nivel bajo de CERTIFIED_S, por lo tanto esta colaboración no se produce. Un alto nivel de MANIPUL_M no quiere decir que esta a favor de un SPPsano, en gran parte este nivel de manipulación que tiene la MAFIA_MARKET favorece a los SEED_IMP.La gráfica de influencia muestra que el actor con menos influencia es el STATE, su apoyo es muy bajo con un SPPsano, mientras que el actor con mayor influencia son los POTAT_PROD, ya qué, papas es lo que los consumidores demandan finalmente.
+
+```{r, fig.height=6, fig.width=7}
+boxNbStep(potatoes, "influence")
+```
+
+##Análisis de componentes principales para la variable satisfacción
+Esta gráfica presenta el análisis de componentes principales para la variable satisfacción. En el siguiente resumen se observa que los dos primeros  componentes explican un alto porcentaje de la varianza (82.46%). En la figura los actores PROINPA_MST y SEEDS_PROD están muy cercanos, lo que se explica por el hecho de que poseen intereses similares y ambos están comprometidos con un SPPsano. Algo similar ocurre con POTAT_PROD. Estos tres actores estan en conflicto con los SEEDS_IMP y en menor grado con la MAFIA_MARKET y el STATE. Ademas, la MAFIA_MARKET esta en conflicto con el STATE  y en menor grado con SEEDS_IMP. El STATE y los SEEDS_IMP están relativamente cercanos (como se muestra en el componente pc1). Esto se debe a que la importación de semilla de papa que es de interes para ambos actores (el estado es quién da los recursos económicos para la importación de semilla subsidiada).
+
+```{r, fig.height=5, fig.width=6}
+acpActResources(potatoes, "satisfaction")
+```
+
+Un análisis de componentes principales para la variable estado de los recursos da como resultado que los dos primeros componentes explican un bajo porcentaje de la varianza (42.88%), este valor se muestra en el resumen estadítico que se da a continuación. Mientras que en la gráfica se puede ver la convergencia que existe entre el recurso SUPPORT_N y POTATOES, como era de esperarse ya que el estado depende de los productores de papa. 
+
+```{r, fig.height=5, fig.width=6}
+acpActResources(potatoes, "resources")
+```
+
+##Análisis de componentes principales de la variable influencia para los individuos 
+
+```{r, fig.height=5, fig.width=6}
+analysisComponents(potatoes, "satisfaction")
+```
+
+##Análisis de correlación entre los actores, de acuerdo a la variable satisfacción
+Del estudio de componentes principales para la variable satisfacción sabemos que los actores PROINPA_MST y SEEDS_PROD están correlacionados positivamente y en gran medida con los POTAT_PROD. Este resultado también puede observarse en la matriz de correlación, donde el valor de correlación entre PROINPA_MST y SEEDS_PROD es de 0.94, mientras que el valor de correlación de PROINPA_MST con POTAT_PROD es de 0.61 y  POTAT_PROD  con SEEDS_PROD  es de 0.66 como se muestra en la Tabla. Esta correlación entre estos tres actores es debido a que tienen intereses en común. Además, estos actores están correlacionados negativamente con SEEDS_IMP.
+
+```{r, fig.height=6, fig.width=6}
+correlationActors(potatoes, "satisfaction")
+```
+
+La elipse más delgada indica correlación positiva. Un ejemplo de ello es el actor PROINPA_MST con SEEDS_PROD tienen correlación positiva, mientras que existe una correlación negativa del actor STATE con MAFIA_MARKET. Los círculos indican una correlación nula.
+
+##Análisis de correlación de los estados de los recursos y la variable satisfacción
+El recurso POTATOES se correlaciona positivamente con el STATE, dado que el estado depende altamente de POTAT_PROD. Para los productores de papa la semilla certificada es de poca importancia, su relación es casi nula como se muestra en la siguiente figura. El estado da apoyo a PROINPA_MST, SEEDS_PROD y POTAT_PROD, pero se puede observar  que POTAT_PROD se oponen a PROINPA_MST  y SEEDS_PROD  a través de la relación que controla RECYCLED_S.
+
+```{r, fig.height=6, fig.width=6}
+correlationActResources(potatoes, "satisfaction")
+```
+
+##Regresión lineal para la variable satisfacción de los actores
+En este análisis se tomó como variable dependiente la satisfacción de PROINPA_MST, y la satisfacción de los demás actores como variable independiente. Se observa que la relación entre la satisfacción de SEEDS_PROD y la satisfacción de PROINPA_MST se ajusta a una línea recta, y presenta poca dispersión (existe una relación directa, es decir, a medida que la producción de semilla certificada aumenta, la semilla prebásica también aumenta). Sin embargo la relación de SEEDS_IMP con PROINPA_MST presenta una relación lineal pero decreciente (una recta con pendiente negativa), esto quiere decir que existe un comportamiento inverso, a medida que la semilla importada aumenta, la semilla prebásica disminuye. En los demás casos, los datos están muy dispersos y no se puede establecer una relación específica con respecto a los POTAT_PROD, STATE y MAFIA_MARKET. Posteriormente se muestra un resumen, donde se puede observar la dependencia o explicación de PROINPA_MST por la satisfacción de los otros actores. La satisfacción de PROINPA_MST es explicada de manera más significativa por la satisfacción del actor SEEDS_PROD (con un valor p igual a 0.001), seguido del actor SEED_IMP (también con un valor de p igual a 0.001).
+
+```{r, fig.height=6, fig.width=6}
+regressionActors(potatoes, "PROINPA_MST", "satisfaction")
+```
+
+Este análisis de regresión lineal también se puede realizar para la variable influencia u objetivo.
+
+##Análisis de conglomerados para la variable influencia
+POTAT_PROD genera el primer grupo de este dendrograma.El STATE representa el segundo grupo y un tercer grupo conformado por MAFIA_MARKET, SEEDS_IMP, PROINPA_MST y SEEDS_PROD. Este último grupo de actores presentan simulaciones similares respecto a sus corridas.
+
+```{r, fig.height=6, fig.width=8}
+clusActResources(potatoes, "influence")
+```
+
+##Análisis de conglomerados para el estado de los recursos
+El recurso SUPPORT_N representa el primer grupo de este dendrograma. El segundo está conformado por CERTIFIED_S, RECYCLED_S Y POTATOES. Estos tres recursos tienen valores muy parecidos en las simulaciones y Un tercer grupo aparece representado por PREBASIC_S, MANIPUL_M Y IMPORTED_S. Las simulaciones de estos actores son similares, aunque cada uno de ellos hace uso del recurso que controla de manera independientemente.
+
+```{r, fig.height=6, fig.width=8}
+clusActResources(potatoes, "resources")
+```
+
+##Lectura del archivo de salida de SocLab para el análisis de sensibilidad
+Los resultados de las simulaciones generadas por SocLab se deben guardar en un archivo texto separado por tabulaciones. Un ejemplo de este archivo, `sensitivityPotatoesModelV4.txt`. 
+
+la salida de esta función (para este ejemplo) se almacena en una variable llamada parameters, la cual sera usada para los análisis.
+
+```{r}
+library(AESS)
+data(parameters)
+```
+
+##Análisis de sensibilidad para la variable satisfacción
+En la siguiente figura se puede observar la satisfacción para cada uno de los actores, variando el parámetro identificación del estado(STATE). Esta variación va desde 0.0 a 1.0, donde el valor 0 indica que el actor no está identificado y 1 que está muy identificado, con los otros actores. Para el STATE el nivel de satisfacción va disminuyendo, para él no es conveniente colaborar. Lo opuesto ocurre con PROINPA_MST, SEEDS_PROD y POTAT_PROD, la satisfacción de estos tres actores mejora al haber más colaboración del Estado. La satisfacción del actor MAFIA_MARKET baja levemente. 
+
+```{r, fig.height=6, fig.width=7}
+sensibilityAnalysis(parameters, "satis", "param0")
+```
+
+Análisis de sensibilidad de la variable influencia respecto al número de pasos.
+
+```{r, fig.height=6, fig.width=7}
+sensibilityAnalysis(parameters, "inf", "nb_step", j = 11000, k = 35)
+```
+
+
+Análisis de sensibilidad de la variable objetivo respecto al número de experimentos.
+
+```{r, fig.height=6, fig.width=7}
+sensibilityAnalysis(parameters, "aim", "num_exp", j = 2, k = 35)
+```
+
+
+
+
