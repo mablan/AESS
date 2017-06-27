@@ -1,5 +1,5 @@
 
-##An R package for the Statistical Analysis of SocLab Outputs
+## An R package for the Statistical Analysis of SocLab Outputs
 
 This library has been developed to ease the statistical analysis of output reports for users of SocLab (https://soclabproject.wordpress.com/) 
 
